@@ -1,0 +1,62 @@
+// ==UserScript==
+// @name        CraigList Great Schools linking
+// @namespace   CraigList Great Schools linking
+// @description CraigList Great Schools linking
+// @include     http://*.craigslist.org/*/apa/*
+// @include     https://*.craigslist.org/*/apa/*
+// @version     1
+// @grant       none
+// @require       https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js
+// @require       http://cdnjs.cloudflare.com/ajax/libs/jquery-ajaxtransport-xdomainrequest/1.0.3/jquery.xdomainrequest.min.js
+// ==/UserScript==
+
+var lat;
+var lon;
+var url;
+var greatSchool_API_KEY="PUT_KEY_HERE"
+function getAddress() {
+  var p= document.getElementById('map');
+  if (p) {
+    lat=p.getAttribute("data-latitude");
+    lon=p.getAttribute("data-longitude");
+
+  }
+
+  var url='https://api.greatschools.org/schools/nearby?key='+greatSchool_API_KEY+'&state=WA&lat='+lat+'&lon='+lon+'&levelCode=elementary-schools&radius=3&limit=3';
+  console.log(url);
+  
+  if(lat && lon ) {
+
+      var jsonData;
+      $.getJSON(url).done(function(data) {
+
+          jsonData=data;
+          console.log(JSON.stringify(jsonData));
+          if(jsonData!==null && jsonData['schools']!==null && jsonData['schools']['school']!==null) {
+              schools = jsonData['schools']['school'];
+              for(var i = 0; i < schools.length; i++) {
+                  var rating =  schools[i]['gsRating'];
+                  var node1 = document.createElement('div');
+                  if (rating>=10) {
+                      node1.innerHTML='<p style="background-color:red">'+JSON.stringify(schools[i])+'</p><br>';
+                  } else if(rating>=9) {
+                      node1.innerHTML='<p style="background-color:yellow">'+JSON.stringify(schools[i])+'</p><br>';
+                  } else {
+                      node1.innerHTML="<p>"+JSON.stringify(schools[i])+"</p><br>";
+                  }
+                  $('body').prepend(node1);
+              }
+          } else {
+              alert("No json data for url: "+url);
+          }
+
+      });
+
+
+  }
+
+ else {
+    alert("No lat/lon found, so using address, please copy/paste in great school website");
+  }
+}
+window.onload = getAddress();
